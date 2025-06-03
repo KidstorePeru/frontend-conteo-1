@@ -7,6 +7,7 @@ export default function CuentasPanel() {
   const [cuentas, setCuentas] = useState([]);
   const [nuevoNombre, setNuevoNombre] = useState("");
   const [nuevoPavos, setNuevoPavos] = useState(0);
+  const [editBuffer, setEditBuffer] = useState({});
 
   useEffect(() => {
     fetchCuentas();
@@ -23,12 +24,18 @@ export default function CuentasPanel() {
     }
   };
 
-  const modificarCampo = async (id, campo, valor) => {
-    const cuenta = cuentas.find((c) => c.id === id);
-    if (!cuenta) return;
-    const actualizada = { ...cuenta, [campo]: valor };
-    await axios.put(`${API}/${id}`, actualizada);
-    fetchCuentas();
+  const modificarCampo = (id, campo, valor) => {
+    setEditBuffer((prev) => ({
+      ...prev,
+      [`${id}-${campo}`]: valor,
+    }));
+
+    setTimeout(() => {
+      const cuenta = cuentas.find((c) => c.id === id);
+      if (!cuenta) return;
+      const actualizada = { ...cuenta, [campo]: valor };
+      axios.put(`${API}/${id}`, actualizada).then(fetchCuentas);
+    }, 300); // Evita spam de actualizaciones
   };
 
   const agregarCuenta = async () => {
@@ -65,7 +72,7 @@ export default function CuentasPanel() {
         🎮 PANEL DE CUENTAS FORTNITE
       </h1>
 
-      {/* Formulario nueva cuenta */}
+      {/* Agregar nueva cuenta */}
       <div className="flex flex-col sm:flex-row items-center gap-3 mb-8 max-w-3xl mx-auto bg-zinc-800 p-4 rounded">
         <input
           type="text"
@@ -109,7 +116,9 @@ export default function CuentasPanel() {
                 <td className="p-3">
                   <input
                     className="text-black px-2 py-1 rounded w-full"
-                    value={cuenta.nombre}
+                    value={
+                      editBuffer[`${cuenta.id}-nombre`] ?? cuenta.nombre
+                    }
                     onChange={(e) =>
                       modificarCampo(cuenta.id, "nombre", e.target.value)
                     }
@@ -119,9 +128,15 @@ export default function CuentasPanel() {
                 <td className="p-3">
                   <input
                     type="number"
-                    value={cuenta.pavos}
+                    value={
+                      editBuffer[`${cuenta.id}-pavos`] ?? cuenta.pavos
+                    }
                     onChange={(e) =>
-                      modificarCampo(cuenta.id, "pavos", Number(e.target.value))
+                      modificarCampo(
+                        cuenta.id,
+                        "pavos",
+                        Number(e.target.value)
+                      )
                     }
                     className="w-24 text-black rounded px-2 py-1"
                   />
@@ -153,11 +168,17 @@ export default function CuentasPanel() {
                   >
                     +
                   </button>
-                  {cuenta.regalos_disponibles < 5 && (
-                    <div className="text-sm text-gray-300 mt-1">
-                      {getTiempoRestante(cuenta.ultimo_regalo)}
-                    </div>
-                  )}
+
+                  {/* Tiempos individuales de regalos */}
+                  {cuenta.regalos_tiempos?.length > 0 &&
+                    cuenta.regalos_tiempos.map((t, idx) => (
+                      <div
+                        key={idx}
+                        className="text-sm text-gray-300 mt-1"
+                      >
+                        🎁 Regalo {idx + 1}: {getTiempoRestante(t)}
+                      </div>
+                    ))}
                 </td>
 
                 <td className="p-3">
