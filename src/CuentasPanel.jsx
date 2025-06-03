@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-const API = "https://backend-conteo-production.up.railway.app/";
+const API = "https://backend-conteo-production.up.railway.app/api/cuentas";
 
 export default function CuentasPanel() {
   const [cuentas, setCuentas] = useState([]);
